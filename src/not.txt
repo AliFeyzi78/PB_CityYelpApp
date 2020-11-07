@@ -1,0 +1,269 @@
+3 sayfa ve "canlı veri" çekeceğiz;
+
+1. paket yüklemelerini yapıyoruz.
+   👉 https://reactnavigation.org/docs/getting-started (navigation için)
+   👉 https://github.com/axios/axios (API)
+        -> npm install axios 
+    
+2. "Router", 3 adet temel yapıda component(cityList, RestaurantList, RestaurantDetail) ve 1 index oluşturuyoruz.
+
+3. Router;
+    import React from 'react';
+    import { View, Text } from 'react-native';
+    import { NavigationContainer } from '@react-navigation/native';
+    import { createStackNavigator } from '@react-navigation/stack';
+
+    const Router = () => {
+        return (
+            <NavigationContainer>
+                <Stack.Navigator>
+                    
+                    <Stack.Screen/>
+                    
+                    <Stack.Screen/>
+                    
+                    <Stack.Screen/>
+                
+                </Stack.Navigator>
+            </NavigationContainer>
+        );
+    };
+
+    export default Router;
+
+4. 3 tane sayfamızın temel yapılarını oluşturuyoruz;
+    ex: RestaurantList
+    import React from 'react';
+    import { SafeAreaView, View, Text, FlatList } from 'react-native';
+
+    const RestaurantList = (props) => {
+        return (
+            <SafeAreaView>
+                <View>
+                    <Text>Restaurant List</Text>
+                </View>
+            </SafeAreaView>
+        )
+    }
+
+    export { RestaurantList };  
+
+5. index oluşturalım;
+    export * from './CityList';
+    export * from './RestaurantDetail';
+    export * from './RestaurantList';
+
+
+6. Router'a Stack yapısını kurup sayfaları tanımlıyoruz;
+    const Stack = createStackNavigator(); // createStackNavigator native-component'ını kendi belirlediğimi "Stack" değişkenine atıyoruz
+
+    import { CityList, RestaurantDetail, RestaurantList } from './pages'; //oluşturduğumuz sayfaları index'ten çağırıyoruz.
+
+    ... 
+                <Stack.Screen  //Stack'i yeni sayfalar(Screen'lar) oluşturmak için kullanıyoruz.
+                    name="Cities"  //Stack.Screen 2 param alır. *name, *component
+                    component={CityList}  //hangi component'a ait oldugunu gösteriyor.
+                    options={{ headerShown: false }} 
+                />
+                <Stack.Screen
+                    name="Restaurants"
+                    component={RestaurantDetail}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="Details"
+                    component={RestaurantList}
+                    options={{ headerShown: false }}
+                />
+    ...
+    
+7. sayfaları hazırlayalım. önce "CityList"
+
+8. CityList;
+    import axios from 'axios'; //API çekeceğiz 
+    import React, { useState, useEffect } from 'react'; //useState->çektiğimiz verileri listede tutacağız.  useEffect->uygulama açılır açılmaz ilk çalışacak fonk.
+    import { SafeAreaView, View, Text, FlatList } from 'react-native';
+
+
+    const CityList = (props) => {
+        const [cityList, setCityList] = useState([]); // 1. verileri tutacağımız cityList'i oluşturalım
+
+        const fetchCityData = async () => {   //2. fetchCityData fonk ile verileri async ve await(verilerin gelmesini bekleyerek) olarak çekeceğiz
+            const { data } = await axios.get("https://opentable.herokuapp.com/api/cities") //6. verileri "response.data" diyerek de alabilirdik. fakat biz parçalayarrak aldık.
+            console.log(data); //4. çekeceğiz veriler kontrol ettiğimizde "data" nesnesinin geldiğini gördük. 
+            setCityList(data.cities); //5. "data" bize  verileri 'count' ve 'cities' olarak gönderiyor.
+        }
+
+        useEffect(() => {    //3. veri çağırma işlemini hemen uygulama başladığında yapmak için
+            fetchCityData();
+        }, [])
+
+        const renderCities = ({ item }) => <Text>{item}</Text> 
+        //9. yeni bir değişken ile fonk tanımlıyoruz. buraya aşağıda FlatList ile gösterilecek ve 
+        yukarıdan axios ile çağırdığımız "data.cities" ve gelen item'ın propertileirni yazıyoruz.
+        bu örnek özelinde data'nın sadece cities nesnesi olduğu için ve onu yukarıda çağırdığımız için
+        sadece {item} yazıyoruz
+
+        return (
+            <SafeAreaView>
+                <View>
+                    <FlatList //7. çektiğimiz listeyi FlatList ile gösteriyoruz. FlatList 3 prop alıyor. 
+                        keyExtractor={(_, index) => index.toString()} 
+                        data={cityList} //8. datayı "useState" ile oluşturduğumuz değişkenden 
+                        renderItem={renderCities} //10. component lerimizi render etmek için kullanacağız 
+                    />
+                </View>
+            </SafeAreaView>
+            )
+        }
+
+     export { CityList };
+
+9. şehirlerimizi componentlar üzerinden göstereceğimiz için "component" klasörünü içine de 
+    "CityItem.js" i  oluşturuyoruz. şehirlerimizi listelemek için kullanacağız.
+
+10. CityItem;
+    import React from 'react';
+    import { TouchableOpacity, Text } from 'react-native';
+
+    const CityItem = (props) => {
+        return (
+            <TouchableOpacity>
+                <Text>{props.CityName}</Text> //1. bu prop ile buadan yakalayacağız.
+            </TouchableOpacity>
+
+        )
+    }
+
+    export { CityItem };
+
+11. CityItem'ı export edebilmek için aynı klasöre "index.js" oluşturalım.
+    export * from './CityItem';
+
+12. CityList;
+    import {CityItem} from '../components';
+
+    👉const renderCities = ({ item }) => <Text>{item}</Text> 
+    // değiştiriyoruz. artık yeni ve style verdiğimiz yeni bir component'dan aldığımız listeyi 
+        ekrana yansıtacağız
+    👉const renderCities = ({ item }) => <CityItem cityName={item}/> 
+    //yukarıda oluşturduğumuz cityName prop'u ile çağırıyoruz. artık listemiz Touchable oldu.
+
+13. CityItem'a biraz style verelim;
+    ...
+    return (
+        <TouchableOpacity style={styles.container}>
+            <Text style={styles.text}>{props.cityName}</Text>
+        </TouchableOpacity>
+            )}
+    ...
+    const styles = StyleSheet.create({
+    container: {
+        padding: 5,
+        alignItems: 'center'
+    },
+    text: {
+        fontSize: 20,
+        fontWeight: '300'
+    },
+    })
+
+14. component'a 1 adet searchbar oluşturalım;
+    import React from 'react';
+    import { View, TextInput } from 'react-native';
+
+    const SearchBar = (props) => {
+        return (
+            null
+        )
+    }
+
+    export { SearchBar };
+
+15. index'den export edelim;
+    export * from './SearchBar';
+
+16. cityList'e gidip FlatList'in hemen üzerinde SearchBar component'ımızı ekleyelim.;
+    import { CityItem, SearchBar } from '../components';
+    ....
+    return (
+        <SafeAreaView>
+            <View>
+                <SearchBar />
+    ....
+
+17. searchbar'a style verelim;
+    ...
+    const styles = StyleSheet.create({
+    container: {
+        backgroundColor: '#8d8d8d',
+        margin: 5,
+        padding: 1,
+        borderRadius: 15,
+    }
+    })
+
+18. ben burdan (SearchBar) prop alacam ve prop gönderecğim.;
+    const SearchBar = (props) => {
+        return (
+            <View style={styles.container}>
+                <TextInput
+                    placeholder={props.placeholder} //1. placeholder'a girilecek default'u props ile göndereceğim
+                    onChangeText={(value) => props.onSearch(value)} 
+                    //2. onChangeText ile girelen her harfi (value) onSearch'a yardımıyla props'a atamasını yaptık
+                />
+            </View>
+        )
+    }
+
+19. CityList->SearchBar'a geldik. propslara atamasını yaptığımız dataları kullanacağız;
+     ...
+     return (
+        <SafeAreaView>
+            <View>
+                <SearchBar
+                    placeholder="...Search a City..."
+                    onSearch={(value) => consele.log(value)} //SearchBar->onSearch'dan gelen değişken
+                />
+    ...
+
+20. 
+    let originalList=[]
+
+    const CityList = (props) => {
+        ...
+
+-----------
+
+    function searchCity(search) {
+        const filteredCities = originalList.filter(city=>{
+            const text = search.toUpperCase();
+            const cityName = city.toUpperCase();
+            
+            return cityName.indexOf(text) > -1;
+        })
+    }
+
+-------------
+
+    <SearchBar
+                    placeholder="...Search a City..."
+                    onSearch={(value) => searchCity(value)}
+                />
+
+--------------
+
+    function searchCity(search) {
+       ...
+        })
+
+        setCityList(filteredCities)
+    }
+
+---------------
+
+     const fetchCityData = async () => {
+        ...
+        originalList=[...data.cities];
+    }
+    
