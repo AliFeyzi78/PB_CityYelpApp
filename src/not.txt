@@ -403,8 +403,7 @@
 
 *****************************************************************
 
-33. sırada karşımıza çıkan Restaurantlara tıkladığımızda detaylarına ulaşmak istiyoruz;
-    ve "arama" yapmak istiyoruz..
+33. sırada => "arama" butonu ekleyerek arama yapmak istiyoruz..
 
 34. önce RestaurantList'e "arama" component ekleyelim="searchbar";
     SearchBar'a gidip bakıyorum iki tane prop'u var. 1. placeholder ve 2.onSearch
@@ -459,3 +458,96 @@
             onSearch={(value)=>searchRestaurant(value)} //buraya ekleyelim.
     />
     ...
+
+39. karşımıza çıkan Restaurantlara tıkladığımızda detaylarına ulaşmak istiyoruz;
+    RestaurantItem'a gidiyoruz ve bizim için herbir restaurant şu an "TouchableOpacity" içerisinde. yani
+    tıklanabilir.
+
+    RestaurantItem;
+    ...
+    const RestaurantItem = (props) => {
+    return (
+        <TouchableOpacity style={styles.container} onPress={props.onSelect}> //onSelect prop'u ile tetikliyoruz.
+    ...
+
+40. RestaurantList'e gidiyoruz;
+    ...
+    const renderRestaurants = ({ item }) => {
+        return (
+            <RestaurantItem
+                restaurant={item} 
+                onSelect={()=>props.navigation.navigate('Details',{selelectedRestaurant:item})} 
+                //restauranItem'dan onSelect prop'u ile gönderdik...
+                ve buradan RestaurantDetail'e tıkladığımız restaurant bilgileri gidecek (navigation)
+            />
+        )
+    }
+    ...
+
+41. gönderdidiğimiz veriyi "RestaurantDetail" den çekelim.
+    RestaurantDetail;
+    ...
+    const RestaurantDetail = (props) => {
+        const { selectedRestaurant } = props.route.params
+    ...
+
+42. artık erişim sağladığımız verileri göstereceğiz;
+    return (
+        <SafeAreaView style={{ flex: 1 }}>
+            <View style={styles.container}>
+                <Text style={styles.name}>{selectedRestaurant.name}</Text>
+                <Image
+                    style={styles.image}
+                    source={{ uri: selectedRestaurant.image_url }}
+                />
+                <View style={styles.infoContainer}>
+                    <Text style={styles.infoText}>{selectedRestaurant.address}</Text>
+                </View>
+                <View style={styles.infoContainer}>
+                    <Text style={styles.infoText}>{selectedRestaurant.area}</Text>
+                </View>
+                <View style={styles.infoContainer}>
+                    <Text style={styles.infoText}>{selectedRestaurant.phone}</Text>
+                </View>
+            </View>
+        </SafeAreaView>
+    )
+}
+
+export { RestaurantDetail };
+
+const styles = StyleSheet.create({
+    container: { flex: 1, padding: 5 },
+    name: { fontWeight: '300', fontSize: 25 },
+    image: { height: Dimensions.get('window').height / 3 },
+    infoContainer: { backgroundColor: '#551753', margin: 5, borderRadius: 10 },
+    infoText: { color: 'white', fontWeight: 'bold' },
+})
+
+---************--PROJECT FINISHED--**************--
+
+özet;
+1. pages klasörünü oluşturduk
+2. pages'e 3 file (kullanılacak 3 sayaf için) oluşturduk
+    - CityList, - RestaurantDetail, - RestaurantList
+3. CityList içini dolduracak component'i hazırladık
+    - CityItem
+4. CityList;
+    * fetchCityData_async/wait ile API veriyi çektik
+    * filtreleme işlem, ile şehir taraması yaptık
+    * renderCities ile tıkladığımızda ilgili şehri dataları ile birlikte fırlatıyoruz.
+5. gönderilen bu şehir ve içerisindeki restaurantları RestaurantList'te yakaladık
+    * const {selectedCity} = props.route.params; 
+6. RestaurantList içerisinde tekrar "arama" yaptırdık
+7. tıkladığımız restaurant'ı navigation ile diğer sayfaya gönderdik
+8. Details sayfasıda ise genel veri gösterdik...
+
+:)
+
+1. gelen price'a göre restaurant' yıldız veya bir isaret eklemek
+2. son sayfada "Details" bir buton (Go to Reserve) ekleyip ilgili restaurant'ın web sayfasının açılmasını istiyoruz
+    data => mobile reserve url 
+
+
+    
+    

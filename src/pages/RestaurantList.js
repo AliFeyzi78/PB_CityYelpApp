@@ -33,6 +33,7 @@ const RestaurantList = (props) => {
         return (
             <RestaurantItem
                 restaurant={item} //restauranItem'dan restaurant prop'u ile gönderdik...
+                onSelect={() => props.navigation.navigate('Details', { selectedRestaurant: item })}
             />
         )
     }
@@ -49,8 +50,8 @@ const RestaurantList = (props) => {
     }
 
     return (
-        <SafeAreaView>
-            <View>
+        <SafeAreaView style={{ flex: 1 }}>
+            <View style={{ flex: 1 }}>
                 <View>
                     <Text style={{ margin: 5, fontWeight: 'bold', fontSize: 35, alignSelf: 'center' }}>{selectedCity}</Text>
                     <SearchBar
