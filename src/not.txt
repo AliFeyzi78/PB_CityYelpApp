@@ -67,12 +67,12 @@
                 />
                 <Stack.Screen
                     name="Restaurants"
-                    component={RestaurantDetail}
+                    component={RestaurantList}
                     options={{ headerShown: false }}
                 />
                 <Stack.Screen
                     name="Details"
-                    component={RestaurantList}
+                    component={RestaurantDetail}
                     options={{ headerShown: false }}
                 />
     ...
@@ -267,3 +267,195 @@
         originalList=[...data.cities];
     }
     
+ *************************************************************************************
+ 21.  listelediğimiz şehirlerimize tıklayınca diğer sayfada görmek istiyorum.
+
+ 22. bunun için CityItem'dan onPress metodunu kullanmam gerekiyor.
+
+ 23. CityItem;
+    const CityItem = (props) => {
+    return (
+        <TouchableOpacity style={styles.container} onPress = {props.onSelect}> 
+            //basılınca onSelect vasıtasıyla props'a değer yüklüyoruz.
+
+24. CityList;
+    ...
+    const renderCities = ({ item }) => {
+            return (
+                <CityItem
+                    cityName={item}
+                    onSelect={() => props.navigation.navigate('Restaurants', { SelectedCity: item })}
+                    ///CityItem'dan gelen onSelect'e basma eylemi burada diğer sayfaya geçmemiz için komut oluyor.
+                        bu komut ile beraber "Restaurants" isimli (RestaurantList) sayfaya gidiyoruz.
+                />
+            )
+        }
+    ...
+
+25. RestaurantList;
+    ...
+    const RestaurantList = (props) => {
+        const { selectedCity } = props.route.params ///bu component'da seçilen şehir yeni sayfada görüntüleniyor
+
+        return(
+    ...
+
+26. şimdi bu şehirde bulunan Restaurantlara erişim sağlamak istiyorum.
+
+27.RestaurantList içinde API çağırısı yapmam gerekiyor.;
+   RestaurantList;
+        import axios from 'axios';
+        ...
+        const RestaurantList = (props) => {
+        const { selectedCity } = props.route.params
+
+        const fetchRestaurants = () => {
+            axios.get(
+                'http://opentable.herokuapp.com/api/restaurants',
+                {
+                    params: {
+                        "city": selectedCity
+                    }
+                })
+                .then(response => console.log(response)) //şimdilik console.log  ile bakıyoruz.
+                .catch(err => console.log(err))
+        }
+
+        useEffect(() => {
+            fetchRestaurants();
+        }, [])
+        return (
+        ...
+
+28. RestaurantList'e çektiğimiz restaurantları belli bir yerde ( yeni bir component) göstereceğiz.
+
+29. yeni component ismi "RestaurantItem";
+    ...
+    const RestaurantItem = (props) => {
+        return (
+            <TouchableOpacity style={styles.container}>
+                <Image
+                    style={styles.image}
+                    source={{ uri: props.restaurant.image_url }}
+                />
+                <Text style={styles.name}>{props.restaurant.name}</Text>
+            </TouchableOpacity>
+        )
+    }
+
+    export { RestaurantItem };
+
+    const styles = StyleSheet.create({
+        container: {
+            ...
+        image: {
+            ...
+        name: {
+            ...
+
+30. maksadımız RestaurantItem'ı kullanarak restaurantları "RestaurantList" ekranında yansıtacağız;
+    yukarıda fetchRestaurants (API) ile çektiğimiz data içerisine bakıyoruz(consele.log). burada data içerisinde 
+    restaurants başlığında bir bölüm var. Bunu kullanacağız.
+    RestaurantList;
+    ...
+    const RestaurantList = (props) => {
+    const [restaurantList, setRestaurantList]= useState([]);
+    ...
+     const fetchRestaurants = () => {
+        axios.get(
+            'http://opentable.herokuapp.com/api/restaurants',
+            {
+                params: {
+                    "city": selectedCity
+                }
+            })
+            .then(response => {
+                setRestaurantList(response.data.restaurants); //then içerisine bunu göndereceğim
+            })
+    }
+    .....
+
+31. devam ediyoruz
+    ...
+    const [restaurantList, setRestaurantList] = useState([]); // useState ile listeyi tutuyoruz.
+    ...
+    return (
+        <SafeAreaView>
+            <View>
+                <Text>{selectedCity}</Text>
+                <FlatList  // burasını dolduruyoruz
+                    keyExtractor={(_,index)=>index.toString()} //burayı unutma!!
+                    data={restaurantList}
+                    renderItem={renderRestaurants}
+                />
+            </View>
+        </SafeAreaView>
+    )
+
+32. render ile devam;
+     const renderRestaurants = ({item}) =>{
+        return(
+            <RestaurantItem
+                restaurant={item} //restauranItem'dan restaurant prop'u ile gönderdik...
+            />
+        )
+    }
+
+*****************************************************************
+
+33. sırada karşımıza çıkan Restaurantlara tıkladığımızda detaylarına ulaşmak istiyoruz;
+    ve "arama" yapmak istiyoruz..
+
+34. önce RestaurantList'e "arama" component ekleyelim="searchbar";
+    SearchBar'a gidip bakıyorum iki tane prop'u var. 1. placeholder ve 2.onSearch
+    
+    RestaurantList;
+    ...
+    return (
+        <SafeAreaView>
+            <View>
+                <View>
+                    <Text style={{ margin: 5, fontWeight: 'bold', fontSize: 35, alignSelf: 'center' }}>{selectedCity}</Text>
+                    <SearchBar placeholder=".....Search a Restaurant.... " /> // buraya searchbar'ı ekleyelim
+    ...
+
+35. aramayı yapmak için yukarıda ayrı bir liste oluşturalım;
+    ...
+
+    let originalList = []; //değişken tanımlamasını yapıyoruz.
+
+    const RestaurantList = (props) => {
+    ...
+
+36. restaurant listeme fetchRestaurants'dan ulaştığım için oraya gidiyoruz;
+     ...
+            .then(response => {
+                setRestaurantList(response.data.restaurants);
+                originalList = [...response.data.restaurants] // böylece yeni liste oluşturuyoruz
+            })
+    ...
+
+37. artık oluşturduğumuz listeye bir fonk. ile restaurant arayabiliriz...
+    ...
+    
+    function searchRestaurant(search) {
+        const filteredRestaurants = originalList.filter(restaurant => {
+            const text = search.toUpperCase();
+            const restaurantName = restaurant.name.toUpperCase();
+
+            return restaurantName.indexOf(text) > -1;
+        })
+
+        setRestaurantList(filteredRestaurants);
+    }
+
+    return (
+    ...
+
+38. fonksiyonu searchbar'a ekliyoruz;
+    ...
+    <SearchBar 
+            placeholder=".....Search a Restaurant.... " 
+            onSearch={(value)=>searchRestaurant(value)} //buraya ekleyelim.
+    />
+    ...
